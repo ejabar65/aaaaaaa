@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Content } from '../types/content';
 import { contentService } from '../services/contentService';
+import { fetchTrending, fetchPopular } from '../services/tmdbApi';
 
 interface UseContentReturn {
   content: {
@@ -102,3 +103,30 @@ export const useContent = (): UseContentReturn => {
     searchContent,
   };
 };
+
+export function useTmdbContent(mediaType: 'movie' | 'tv' = 'movie', type: 'trending' | 'popular' = 'trending') {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    const fetchData = async () => {
+      try {
+        const results =
+          type === 'trending'
+            ? await fetchTrending(mediaType)
+            : await fetchPopular(mediaType);
+        setData(results);
+      } catch (err: any) {
+        setError(err.message || 'Error fetching content');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [mediaType, type]);
+
+  return { data, loading, error };
+}
